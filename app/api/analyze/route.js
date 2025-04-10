@@ -66,15 +66,23 @@ export async function POST(request) {
       ${pdfText.substring(0, 15000)} // Limiting to 15000 chars to avoid token limits
     `;
 
+    // Using chat completions API for text analysis
     const analysisResponse = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4", // Using gpt-4 for higher quality analysis
       messages: [
-        { role: "system", content: "You are a real estate assistant that specializes in analyzing purchase contracts." },
-        { role: "user", content: analysisPrompt }
+        { 
+          role: "system", 
+          content: "You are a real estate assistant that specializes in analyzing purchase contracts." 
+        },
+        { 
+          role: "user", 
+          content: analysisPrompt 
+        }
       ],
-      temperature: 0.3,
+      temperature: 0.3, // Lower temperature for more deterministic results
     });
 
+    // Extract the analysis text from the response
     const analysisText = analysisResponse.choices[0].message.content;
     
     // Store transaction and analysis in Supabase database
