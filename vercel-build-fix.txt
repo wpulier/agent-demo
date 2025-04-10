@@ -1,0 +1,8 @@
+This file exists to ensure Vercel deploys the latest commit.
+
+Build should include:
+- lib/utils.ts for shadcn/ui
+- correct path aliases in tsconfig.json
+- tailwind.config.js
+
+Current timestamp: 2024-07-26 

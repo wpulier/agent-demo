@@ -2,6 +2,10 @@
 
 A Next.js app for real estate agents to streamline offer creation and transaction management.
 
+## Important Build Note
+
+This project relies on the lib/utils.ts file for shadcn/ui components. Please ensure this file is tracked in git and included in the deployment.
+
 ## Demo Features
 
 - REPC Analysis with drag-and-drop PDF upload
