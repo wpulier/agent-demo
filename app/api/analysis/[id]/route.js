@@ -14,54 +14,55 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Get transaction info
-    const { data: transactionData, error: transactionError } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      // Try to get from Supabase first if available
+      const { data: transactionData, error: transactionError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (transactionError) {
-      console.error('Error fetching transaction:', transactionError);
-      return NextResponse.json(
-        { error: 'Failed to fetch transaction' },
-        { status: 500 }
-      );
-    }
+      if (transactionError) {
+        throw new Error('Failed to fetch transaction');
+      }
 
-    if (!transactionData) {
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analysis')
+        .select('*')
+        .eq('transaction_id', id)
+        .single();
+
+      if (analysisError) {
+        throw new Error('Failed to fetch analysis');
+      }
+
+      return NextResponse.json({
+        transaction: transactionData,
+        analysis: analysisData
+      });
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      
+      // Check if this is a session ID from direct analysis
+      const cachedData = global.analysisCache?.[id];
+      if (cachedData) {
+        return NextResponse.json({
+          analysisText: cachedData.analysisText,
+          transaction: {
+            id: id,
+            file_name: cachedData.fileName || "Document Analysis",
+            status: "analyzed",
+            created_at: cachedData.timestamp || new Date().toISOString()
+          }
+        });
+      }
+      
+      // If no cached data, return error
       return NextResponse.json(
-        { error: 'Transaction not found' },
+        { error: 'Analysis not found or database not available' },
         { status: 404 }
       );
     }
-
-    // Get analysis for this transaction
-    const { data: analysisData, error: analysisError } = await supabase
-      .from('analysis')
-      .select('*')
-      .eq('transaction_id', id)
-      .single();
-
-    if (analysisError) {
-      console.error('Error fetching analysis:', analysisError);
-      return NextResponse.json(
-        { error: 'Failed to fetch analysis' },
-        { status: 500 }
-      );
-    }
-
-    if (!analysisData) {
-      return NextResponse.json(
-        { error: 'Analysis not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      transaction: transactionData,
-      analysis: analysisData
-    });
   } catch (error) {
     console.error('Error processing request:', error);
     return NextResponse.json(

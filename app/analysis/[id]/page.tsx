@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
 interface AnalysisData {
-  id: string;
-  transaction_id: string;
+  id?: string;
+  transaction_id?: string;
   analysis_text: string;
   created_at?: string;
 }
@@ -44,8 +44,25 @@ export default function AnalysisPage() {
           throw new Error(data.error || 'Failed to fetch analysis');
         }
         
-        setAnalysis(data.analysis);
-        setTransaction(data.transaction);
+        // If we get analyzedText directly (from newer API implementation)
+        if (data.analysisText) {
+          setAnalysis({ analysis_text: data.analysisText });
+          if (data.transaction) {
+            setTransaction(data.transaction);
+          } else {
+            // Create simple transaction info from ID
+            setTransaction({
+              id: id,
+              file_name: "Document Analysis",
+              status: "analyzed",
+              created_at: new Date().toISOString()
+            });
+          }
+        } else {
+          // Original DB-based approach
+          setAnalysis(data.analysis);
+          setTransaction(data.transaction);
+        }
       } catch (error) {
         console.error('Error fetching analysis:', error);
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
